@@ -6,7 +6,7 @@
 
 signed main()
 {
-  std::vector<std::string, mem_allocator<std::string>> vec{"a", "b", "c",};
+  std::vector<std::string, memmanagment::mem_allocator<std::string>> vec{"a", "b", "c",};
   vec.emplace_back("d");
   vec.emplace_back("e");
 
