@@ -1,10 +1,20 @@
 cmake_minimum_required(VERSION 3.12)
 
-set( PROJECT_BUILD_NUMBER $ENV{TRAVIS_BUILD_NUMBER})
+set( PROJECT_BUILD_NUMBER   $ENV{TRAVIS_BUILD_NUMBER})
+set( STATIC_POOL_SIZE       $ENV{ALLOCATOR_STATIC_POOL_SIZE})
+set( STATIC_POOL_CHUNK_SIZE $ENV{ALLOCATOR_STATIC_POOL_CHUNK_SIZE})
 
 if ("${PROJECT_BUILD_NUMBER}" STREQUAL "")
     set(PROJECT_BUILD_NUMBER "1")
 endif ("${PROJECT_BUILD_NUMBER}" STREQUAL "")
+
+if ("${STATIC_POOL_SIZE}" STREQUAL "")
+    set(STATIC_POOL_SIZE "100")
+endif ("${STATIC_POOL_SIZE}" STREQUAL "")
+
+if ("${STATIC_POOL_CHUNK_SIZE}" STREQUAL "")
+    set(STATIC_POOL_CHUNK_SIZE "10")
+endif ("${STATIC_POOL_CHUNK_SIZE}" STREQUAL "")
 
 project(
     allocator
@@ -14,7 +24,7 @@ project(
 
 find_package(Threads REQUIRED)
 
-#configure_file(project_info.hpp.in project_info.hpp)
+configure_file(project_info.hpp.in project_info.hpp)
 
 add_subdirectory(lib)
 #add_subdirectory(tst)

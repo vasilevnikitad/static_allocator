@@ -1,0 +1,49 @@
+#ifndef __PROJECT_INFO_HPP_
+#define __PROJECT_INFO_HPP_
+#include <iostream>
+
+
+#define CREATE_GET(specifiers, var) \
+      specifiers auto get_##var() \
+      { return var; } //
+
+namespace project_info
+{
+  constexpr class version {
+    private:
+      static constexpr unsigned major{@PROJECT_VERSION_MAJOR@};
+      static constexpr unsigned minor{@PROJECT_VERSION_MINOR@};
+      static constexpr unsigned patch{@PROJECT_VERSION_PATCH@};
+      static constexpr unsigned build_num{@PROJECT_BUILD_NUMBER@};
+
+    public:
+
+      CREATE_GET(static constexpr, major);
+      CREATE_GET(static constexpr, minor);
+      CREATE_GET(static constexpr, patch);
+      CREATE_GET(static constexpr, build_num);
+
+      friend inline std::ostream& operator << (std::ostream &out,
+                                               version const &ver)
+      {
+        return out << ver.get_major() << '.'
+                   << ver.get_minor() << '.'
+                   << ver.get_patch();
+      }
+  } version;
+
+  namespace managment {
+
+    constexpr class memory {
+      private:
+        static constexpr std::size_t static_pool_size{@STATIC_POOL_SIZE@};
+        static constexpr std::size_t static_pool_chunk_size{@STATIC_POOL_CHUNK_SIZE@};
+      public:
+        CREATE_GET(static constexpr, static_pool_size);
+        CREATE_GET(static constexpr, static_pool_chunk_size);
+    }
+  }
+}
+
+#undef CREATE_GET
+#endif
