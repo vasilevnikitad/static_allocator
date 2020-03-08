@@ -138,12 +138,8 @@ namespace memmanagment {
       }
   };
 
-  constexpr std::size_t STATIC_POOL_SIZE{1000};
-  constexpr std::size_t STATIC_POOL_CHUNK_SIZE{100};
 
-  static inline mem_pool<STATIC_POOL_SIZE, STATIC_POOL_CHUNK_SIZE> static_pool{};
-
-  template<class T, typename MEM_POOL = decltype(static_pool)>
+  template<class T, typename MEM_POOL>
   class mem_allocator{
     private:
       MEM_POOL &pool;
@@ -151,11 +147,11 @@ namespace memmanagment {
     public:
       using value_type = T;
 
-      inline explicit mem_allocator(MEM_POOL &mem_pool = static_pool) noexcept : pool{mem_pool}
+      inline explicit mem_allocator(MEM_POOL &mem_pool) noexcept : pool{mem_pool}
       {}
 
-      template<class U>
-      inline mem_allocator(mem_allocator<U> const &allctr) noexcept : pool{allctr.pool}
+      template<class U, typename U_MEM_POOL>
+      inline mem_allocator(mem_allocator<U, U_MEM_POOL> const &allctr) noexcept : pool{allctr.pool}
       {}
 
       inline T* allocate(std::size_t n) noexcept
@@ -177,14 +173,14 @@ namespace memmanagment {
 
   };
 
-  template<class T>
-  inline bool operator ==(mem_allocator<T> const &a, mem_allocator<T> const &b)
+  template<class T, typename MEM_POOL>
+  inline bool operator ==(mem_allocator<T, MEM_POOL> const &a, mem_allocator<T, MEM_POOL> const &b)
   {
     return std::addressof(a.pool) == std::addressof(b.pool);
   }
 
-  template<class T>
-  inline bool operator !=(mem_allocator<T> const &a, mem_allocator<T> const &b)
+  template<class T, typename MEM_POOL>
+  inline bool operator !=(mem_allocator<T, MEM_POOL> const &a, mem_allocator<T, MEM_POOL> const &b)
   {
     return !(a == b);
   }
