@@ -41,7 +41,7 @@ namespace project_info
       public:
         CREATE_GET(static constexpr, static_pool_size);
         CREATE_GET(static constexpr, static_pool_chunk_size);
-    }
+    } memory;
   }
 }
 
