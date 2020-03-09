@@ -146,6 +146,7 @@ namespace memmanagment {
 
     public:
       using value_type = T;
+      using mem_pool_type = MEM_POOL;
 
       inline explicit mem_allocator(MEM_POOL &mem_pool) noexcept : pool{mem_pool}
       {}
