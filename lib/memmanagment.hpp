@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstdint>
+#include <cstdlib>
 #include <cstddef>
 #include <iterator>
 #include <memory>
@@ -8,14 +9,13 @@
 #include <iostream>
 
 namespace memmanagment {
-#define DEBUG_PRINT(value) std::cout << __PRETTY_FUNCTION__ << " "#value ": " << (value) << std::endl
 
   template<std::size_t POOL_SIZE = 1000,
            std::size_t CHUNK_SIZE = 10>
   class mem_pool {
 
-    static_assert(CHUNK_SIZE < POOL_SIZE,
-        "chunk size should be less or equal to POOL_SIZE ");
+    static_assert(CHUNK_SIZE <= POOL_SIZE,
+        "chunk size should be less or equal to pool size ");
 
     private:
 
@@ -61,15 +61,15 @@ namespace memmanagment {
       }
 
     public:
-      inline mem_pool()
-      {
-        std::cout << __PRETTY_FUNCTION__ <<": chunks count = " << chunks_cnt << std::endl;
-        std::cout << __PRETTY_FUNCTION__ <<": pool address = " << &pool.chunk[0] << std::endl;
-      }
+
+      inline mem_pool() { }
 
       [[nodiscard]]
       inline void *allocate(std::size_t const bytes_cnt, std::size_t const alignment = max_align) noexcept
       {
+        if (bytes_cnt == 0)
+          return &pool.chunk[0];
+
         std::size_t const min_chunks_count{div_with_round(bytes_cnt, CHUNK_SIZE)};
 
         auto const search_free_chunks = [count = min_chunks_count](auto const it_begin, auto const it_last) {
@@ -123,7 +123,7 @@ namespace memmanagment {
 
         std::size_t const first_chunk_index{get_chunk_index_by_ptr(ptr)};
         std::size_t const last_chunk_index{get_chunk_index_by_ptr(reinterpret_cast<std::uint8_t *>(ptr) + bytes_cnt)};
-        std::size_t const chunks2deallocate{last_chunk_index - first_chunk_index};
+        std::size_t const chunks2deallocate{last_chunk_index - first_chunk_index + 1};
 
         std::lock_guard<std::mutex> guard{pool_mutex};
 
@@ -150,19 +150,18 @@ namespace memmanagment {
 
       inline T* allocate(std::size_t n) noexcept
       {
-        std::cout << __PRETTY_FUNCTION__ <<": allocating " << n << " elementes of size " << sizeof(T) << std::endl;
         void *ptr = pool.allocate(n * sizeof(T), alignof(T));
 
-
-        if (ptr == nullptr) {
-          std::cout << "ASSERT" << std::endl;
+        if (!ptr) {
+          std::cerr << __PRETTY_FUNCTION__ << "Cannot allocate enough memmory" << std::endl;
+          exit(EXIT_FAILURE);
         }
         return reinterpret_cast<T*>(ptr);
       }
 
-      inline void deallocate(T* const ptr, std::size_t const sz) noexcept
+      inline void deallocate(T* const ptr, std::size_t const n) noexcept
       {
-        pool.deallocate(ptr, sz);
+        pool.deallocate(ptr, n * sizeof(T));
       }
 
       template<class U, typename U_MEM_POOL>
@@ -178,6 +177,5 @@ namespace memmanagment {
       }
 
   };
-
 
 }
