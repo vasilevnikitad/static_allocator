@@ -171,18 +171,19 @@ namespace memmanagment {
         pool.deallocate(ptr, sz);
       }
 
+      template<class U, typename U_MEM_POOL>
+      inline bool operator ==(mem_allocator<U, U_MEM_POOL> const &a)
+      {
+        return std::addressof(pool) == std::addressof(a.pool);
+      }
+
+      template<class U, typename U_MEM_POOL>
+      inline bool operator !=(mem_allocator<U, U_MEM_POOL> const &a)
+      {
+        return !(*this == a);
+      }
+
   };
 
-  template<class T, typename MEM_POOL>
-  inline bool operator ==(mem_allocator<T, MEM_POOL> const &a, mem_allocator<T, MEM_POOL> const &b)
-  {
-    return std::addressof(a.pool) == std::addressof(b.pool);
-  }
-
-  template<class T, typename MEM_POOL>
-  inline bool operator !=(mem_allocator<T, MEM_POOL> const &a, mem_allocator<T, MEM_POOL> const &b)
-  {
-    return !(a == b);
-  }
 
 }
