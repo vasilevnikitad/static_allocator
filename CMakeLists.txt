@@ -28,8 +28,8 @@ configure_file(project_info.hpp.in project_info.hpp)
 
 add_subdirectory(lib)
 add_subdirectory(src)
-#add_subdirectory(tst)
+add_subdirectory(tst)
 #add_subdirectory(pkg)
 
-#enable_testing()
+enable_testing()
 include(CTest)

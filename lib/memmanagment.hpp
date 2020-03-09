@@ -94,15 +94,8 @@ namespace memmanagment {
             return nullptr;
 
 
-          DEBUG_PRINT(first_chunk_index);
-          DEBUG_PRINT(align_ptr);
           auto const align_first_index{get_chunk_index_by_ptr(align_ptr)};
-          DEBUG_PRINT(align_first_index);
-
-          void* some_ptr{reinterpret_cast<std::uint8_t *>(align_ptr) + bytes_cnt};
-          DEBUG_PRINT(some_ptr);
           auto const align_last_index{get_chunk_index_by_ptr(reinterpret_cast<std::uint8_t *>(align_ptr) + bytes_cnt)};
-          DEBUG_PRINT(align_last_index);
 
           // if (align_first_index < first_chunk_index + min_chunks_count) &&
           //     (align_last_index < first_chunk_index + min_chunks_count)
