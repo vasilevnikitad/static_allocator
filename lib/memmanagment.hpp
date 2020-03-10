@@ -30,6 +30,8 @@ namespace memmanagment {
         std::uint8_t bytes[SIZE];
       };
       struct chunk_info_t {
+        //FIXME: Actually, we could use only 1 bit as a flag per chunk
+        // so it would take less additional memory.
         bool is_reserved;
 
         constexpr chunk_info_t(bool const reserved = false) : is_reserved{reserved} {};
@@ -67,6 +69,7 @@ namespace memmanagment {
       [[nodiscard]]
       inline void *allocate(std::size_t const bytes_cnt, std::size_t const alignment = max_align) noexcept
       {
+        //FIXME: Probably, this function could be optimized.
         if (bytes_cnt == 0)
           return &pool.chunk[0];
 
@@ -85,6 +88,7 @@ namespace memmanagment {
         for(auto it{search_free_chunks(it_chunk_info_begin, it_chunk_info_end)};
             it != it_chunk_info_end;
             it = search_free_chunks(std::next(it), it_chunk_info_end)) {
+          //FIXME: this cycle can be simplifed by puting align stuff into separate function
 
           std::size_t const first_chunk_index(std::distance(it_chunk_info_begin, it));
           void *align_ptr{&pool.chunk[first_chunk_index]};
