@@ -11,7 +11,7 @@
 #include <type_traits>
 #include <iostream>
 
-#ifndef __PRETTY_FUNCTION__
+#ifdef __FUNCSIG__
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
 
