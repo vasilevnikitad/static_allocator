@@ -38,7 +38,7 @@ namespace memmanagment {
       };
 
       static constexpr std::size_t max_align = alignof(std::max_align_t);
-      static constexpr std::size_t chunks_cnt = div_with_round(POOL_SIZE, CHUNK_SIZE);
+      static constexpr std::size_t chunks_cnt = div_with_round(POOL_SIZE, sizeof(chunk<CHUNK_SIZE>));
 
       using chunk_type = std::aligned_storage_t<sizeof(chunk<CHUNK_SIZE>),
                                                 alignof(chunk<CHUNK_SIZE>)>;
