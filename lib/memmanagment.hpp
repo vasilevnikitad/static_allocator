@@ -11,6 +11,10 @@
 #include <type_traits>
 #include <iostream>
 
+#ifndef __PRETTY_FUNCTION__
+#define __PRETTY_FUNCTION__ __FUNCSIG__
+#endif
+
 namespace memmanagment {
 
   template<std::size_t POOL_SIZE = 1000,
