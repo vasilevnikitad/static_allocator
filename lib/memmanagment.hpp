@@ -69,7 +69,8 @@ namespace memmanagment {
       [[nodiscard]]
       inline void *allocate(std::size_t const bytes_cnt, std::size_t const alignment = max_align) noexcept
       {
-        //FIXME: Probably, this function could be optimized.
+        //FIXME: Probably, this function could be optimized. But i didn't find a pretty way w/o
+        // use of additional memory :/
         if (bytes_cnt == 0)
           return &pool.chunk[0];
 
@@ -88,7 +89,6 @@ namespace memmanagment {
         for(auto it{search_free_chunks(it_chunk_info_begin, it_chunk_info_end)};
             it != it_chunk_info_end;
             it = search_free_chunks(std::next(it), it_chunk_info_end)) {
-          //FIXME: this cycle can be simplifed by puting align stuff into separate function
 
           std::size_t const first_chunk_index(std::distance(it_chunk_info_begin, it));
           void *align_ptr{&pool.chunk[first_chunk_index]};
@@ -101,11 +101,8 @@ namespace memmanagment {
           auto const align_first_index{get_chunk_index_by_ptr(align_ptr)};
           auto const align_last_index{get_chunk_index_by_ptr(reinterpret_cast<std::uint8_t *>(align_ptr) + bytes_cnt)};
 
-          // if (align_first_index < first_chunk_index + min_chunks_count) &&
-          //     (align_last_index < first_chunk_index + min_chunks_count)
-          // then it's already checked that they are not reserved. But i don't want make logic too hard to read,
-          // so let it be just stupid.
-
+          //FIXME: we could not check that chunks are free in case of align_first_index == first_chunk_index &&
+          // align_last_index == first_chunk_index + min_chunks_count but it would add aditional if branches
           if (auto align_it_begin{std::next(it_chunk_info_begin, align_first_index)},
                    align_it_end{std::next(it_chunk_info_begin, align_last_index + 1)};
               std::none_of(align_it_begin, align_it_end, [](auto info){ return info.is_reserved; })) {
