@@ -142,6 +142,9 @@ namespace memmanagment {
       using value_type = T;
       using mem_pool_type = MEM_POOL;
 
+      template<typename U, typename U_MEM_POOL = MEM_POOL>
+      struct rebind { using other = mem_allocator<U, U_MEM_POOL>;};
+
       inline explicit mem_allocator(MEM_POOL &mem_pool) noexcept : pool{mem_pool}
       {}
 
