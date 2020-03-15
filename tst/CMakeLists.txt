@@ -22,7 +22,7 @@ set_target_properties(
             CXX_EXTENSIONS OFF
             COMPILE_OPTIONS "-g;-Wpedantic;-Wall;-Wextra;-Werror"
             COMPILE_DEFINITIONS BOOST_ALL_DYN_LINK
-            LINK_LIBRARIES "lib;boost_unit_test_framework"
+            LINK_LIBRARIES "lib;boost_unit_test_framework;-pthread"
             BUILD_RPATH "${CMAKE_BINARY_DIR}/lib"
             INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIR}
 )

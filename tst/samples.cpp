@@ -7,10 +7,13 @@
 
 #include <algorithm>
 #include <exception>
+#include <future>
 #include <string>
 #include <vector>
 #include <list>
 #include <iterator>
+#include <utility>
+#include <random>
 
 BOOST_AUTO_TEST_SUITE(sample)
 
@@ -91,6 +94,53 @@ BOOST_AUTO_TEST_CASE(mem_chunks) try {
     allctr2.deallocate(vec2[i], i);
     allctr1.deallocate(vec1[i], i);
   }
+
+} catch(std::exception const &e) {
+  BOOST_FAIL(e.what());
+} catch(...) {
+  BOOST_FAIL("Unknown exception");
+}
+
+BOOST_AUTO_TEST_CASE(thread_test) try {
+  constexpr std::size_t input_str_len{static_pool_size / 2};
+  constexpr std::size_t threads_cnt{12};
+
+  auto get_rand_string = [] (std::size_t const len) {
+    std::string str{};
+
+    str.reserve(len);
+
+    std::mt19937 gen(std::random_device{}());
+    std::uniform_int_distribution<char> dis('a', 'z');
+    for(std::size_t i{0}; i < len; ++i) {
+      str += dis(gen);
+    }
+    return str;
+  };
+  std::string const input_str{get_rand_string(input_str_len)};
+
+  static memmanagment::mem_pool<static_pool_size, static_pool_chunk_size> static_pool{};
+  memmanagment::mem_allocator<char, decltype(static_pool)> ch_allocator{static_pool};
+
+  auto cpy_str = [&allocator = ch_allocator](auto &&str) {
+    return std::basic_string<char, std::char_traits<char>,
+                      std::remove_reference_t<decltype(allocator)>>{std::forward<decltype(str)>(str), allocator};
+  };
+
+  using future_type = decltype(std::async(std::launch::async, cpy_str, std::string{}));
+  std::vector<future_type> futures;
+
+  std::size_t const chars_per_thread(std::ceil(static_cast<double>(input_str.length()) / threads_cnt));
+  for(std::size_t i{0}; i < input_str.length(); i += chars_per_thread) {
+    futures.emplace_back(std::async(std::launch::async, cpy_str, input_str.substr(i, chars_per_thread)));
+  }
+
+  std::string output_str{};
+
+  std::for_each(std::begin(futures), std::end(futures), [&str = output_str](auto &fut){ str.append(fut.get());});
+
+  if (!std::equal(std::begin(input_str), std::end(input_str), std::begin(output_str), std::end(output_str)))
+    BOOST_FAIL("input and output strings should be equal");
 
 } catch(std::exception const &e) {
   BOOST_FAIL(e.what());
