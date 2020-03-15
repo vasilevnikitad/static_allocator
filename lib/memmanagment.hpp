@@ -1,3 +1,6 @@
+#ifndef MEMMANAGMENT_HPP__
+#define MEMMANAGMENT_HPP__
+
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
@@ -183,3 +186,4 @@ namespace memmanagment {
   };
 
 }
+#endif
