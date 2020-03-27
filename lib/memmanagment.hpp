@@ -76,46 +76,38 @@ namespace memmanagment {
       [[nodiscard]]
       inline void *allocate(std::size_t const bytes_cnt, std::size_t const alignment = max_align) noexcept
       {
-        //FIXME: Probably, this function could be optimized. But i didn't find a pretty way w/o
-        // use of additional memory :/
         if (bytes_cnt == 0)
           return &pool.chunk[0];
 
-        std::size_t const min_chunks_count{div_with_round(bytes_cnt, CHUNK_SIZE)};
-
-        auto const search_free_chunks = [count = min_chunks_count](auto const it_begin, auto const it_last) {
-          return std::search_n(it_begin, it_last, count, chunk_info_t{false}, [](auto const &a, auto const &b){
-              return a.is_reserved == b.is_reserved;
-          });
+        auto const &&is_free = [](auto const &a){return !a.is_reserved;};
+        auto const &&get_chunk = [this](auto const info_it) {
+          std::size_t const index(std::distance(std::begin(pool.chunk_info), info_it));
+          return &pool.chunk[index];
         };
-        auto const it_chunk_info_begin{std::begin(pool.chunk_info)};
-        auto const it_chunk_info_end{std::end(pool.chunk_info)};
-
-        std::lock_guard<std::mutex> guard{pool_mutex};
-
-        for(auto it{search_free_chunks(it_chunk_info_begin, it_chunk_info_end)};
-            it != it_chunk_info_end;
-            it = search_free_chunks(std::next(it), it_chunk_info_end)) {
-
-          std::size_t const first_chunk_index(std::distance(it_chunk_info_begin, it));
-          void *align_ptr{&pool.chunk[first_chunk_index]};
-          std::size_t space(reinterpret_cast<std::uint8_t const*>(&pool.chunk + 1) - reinterpret_cast<std::uint8_t const*>(align_ptr));
-
-          if (!std::align(alignment, bytes_cnt, align_ptr, space))
-            return nullptr;
 
 
-          auto const align_first_index{get_chunk_index_by_ptr(align_ptr)};
-          auto const align_last_index{get_chunk_index_by_ptr(reinterpret_cast<std::uint8_t *>(align_ptr) + bytes_cnt)};
+        for( auto it = std::begin(pool.chunk_info), end{std::end(pool.chunk_info)}; it != end;
+            it = std::find_if(std::next(it), end, is_free)) {
+          void *ptr{get_chunk(it)};
+          std::size_t space{sizeof pool.chunk[0]};
 
-          //FIXME: we could not check that chunks are free in case of align_first_index == first_chunk_index &&
-          // align_last_index == first_chunk_index + min_chunks_count but it would add aditional if branches
-          if (auto align_it_begin{std::next(it_chunk_info_begin, align_first_index)},
-                   align_it_end{std::next(it_chunk_info_begin, align_last_index + 1)};
-              std::none_of(align_it_begin, align_it_end, [](auto info){ return info.is_reserved; })) {
+          if (std::align(alignment, 0, ptr, space)) {
 
-            std::fill(align_it_begin, align_it_end, chunk_info_t{true});
-            return align_ptr;
+            if (bytes_cnt <= space) {
+              (*it).is_reserved = false;
+              return ptr;
+            }
+
+            decltype(std::distance(it, end)) const additional_chunks_needed(div_with_round(bytes_cnt - space, sizeof pool.chunk[0]));
+
+            if (std::distance(it, end) >= additional_chunks_needed) {
+              auto range_end = std::next(it, additional_chunks_needed + 1);
+
+              if (std::all_of(std::next(it), range_end, is_free)) {
+                std::fill(it, range_end, chunk_info_t{true});
+                return ptr;
+              }
+            }
           }
         }
 
