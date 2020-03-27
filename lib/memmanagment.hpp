@@ -115,8 +115,8 @@ namespace memmanagment {
       }
 
       inline void deallocate(void *const ptr,
-                      std::size_t const bytes_cnt,
-                      [[maybe_unused]]std::size_t const alignment = max_align) noexcept
+                             std::size_t const bytes_cnt,
+             [[maybe_unused]]std::size_t const alignment = max_align) noexcept
       {
         if (ptr == nullptr || bytes_cnt == 0)
           return;
@@ -157,7 +157,7 @@ namespace memmanagment {
         void *ptr = pool.allocate(n * sizeof(T), alignof(T));
 
         if (!ptr) {
-          std::cerr << __PRETTY_FUNCTION__ << "Cannot allocate enough memmory" << std::endl;
+          std::cerr << __PRETTY_FUNCTION__ << ": Cannot allocate enough memmory" << std::endl;
           exit(EXIT_FAILURE);
         }
         return reinterpret_cast<T*>(ptr);
