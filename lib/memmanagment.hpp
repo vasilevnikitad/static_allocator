@@ -63,8 +63,8 @@ namespace memmanagment {
 
       inline std::size_t get_chunk_index_by_ptr(void const *ptr) noexcept
       {
-        std::uintptr_t const a(reinterpret_cast<std::uintptr_t>(ptr));
-        std::uintptr_t const b(reinterpret_cast<std::uintptr_t>(&pool.chunk[0]));
+        auto const a{reinterpret_cast<std::uintptr_t>(ptr)};
+        auto const b{reinterpret_cast<std::uintptr_t>(&pool.chunk[0])};
 
         return  (a - b) / sizeof(pool.chunk[0]);
       }
