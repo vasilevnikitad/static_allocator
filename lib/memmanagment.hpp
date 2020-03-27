@@ -98,7 +98,8 @@ namespace memmanagment {
               return ptr;
             }
 
-            decltype(std::distance(it, end)) const additional_chunks_needed(div_with_round(bytes_cnt - space, sizeof pool.chunk[0]));
+            decltype(std::distance(it, end)) const
+                additional_chunks_needed(div_with_round(bytes_cnt - space, sizeof pool.chunk[0]));
 
             if (std::distance(it, end) >= additional_chunks_needed) {
               auto range_end = std::next(it, additional_chunks_needed + 1);
