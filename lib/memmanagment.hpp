@@ -151,6 +151,7 @@ namespace memmanagment {
       inline mem_allocator(mem_allocator<U, U_MEM_POOL> const &allctr) noexcept : pool{allctr.pool}
       {}
 
+      [[nodiscard]]
       inline T* allocate(std::size_t n) noexcept
       {
         void *ptr = pool.allocate(n * sizeof(T), alignof(T));
