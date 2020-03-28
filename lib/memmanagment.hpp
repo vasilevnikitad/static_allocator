@@ -10,6 +10,7 @@
 #include <mutex>
 #include <type_traits>
 #include <iostream>
+#include <vector>
 
 #ifdef __FUNCSIG__
 #define __PRETTY_FUNCTION__ __FUNCSIG__
@@ -18,7 +19,8 @@
 namespace memmanagment {
 
   template<std::size_t POOL_SIZE = 1000,
-           std::size_t CHUNK_SIZE = 10>
+           std::size_t CHUNK_SIZE = 10,
+           typename Alloc = std::allocator<bool>>
   class mem_pool {
 
     static_assert(CHUNK_SIZE <= POOL_SIZE,
@@ -36,13 +38,7 @@ namespace memmanagment {
       struct chunk {
         std::uint8_t bytes[SIZE];
       };
-      struct chunk_info_t {
-        //FIXME: Actually, we could use only 1 bit as a flag per chunk
-        // so it would take less additional memory.
-        bool is_reserved;
 
-        constexpr chunk_info_t(bool const reserved = false) : is_reserved{reserved} {};
-      };
 
       static constexpr std::size_t max_align = alignof(std::max_align_t);
       static constexpr std::size_t chunks_cnt = div_with_round(POOL_SIZE, sizeof(chunk<CHUNK_SIZE>));
@@ -50,8 +46,10 @@ namespace memmanagment {
       using chunk_type = std::aligned_storage_t<sizeof(chunk<CHUNK_SIZE>),
                                                 alignof(chunk<CHUNK_SIZE>)>;
       struct {
+        using vec_alloc = typename Alloc::template rebind<bool>::other;
+
         chunk_type chunk[chunks_cnt]{};
-        chunk_info_t chunk_info[chunks_cnt]{};
+        std::vector<bool, vec_alloc> chunk_reserved;
       } pool{};
 
       std::mutex pool_mutex;
@@ -71,7 +69,10 @@ namespace memmanagment {
 
     public:
 
-      inline mem_pool() { }
+      inline mem_pool()
+      {
+          pool.chunk_reserved.resize(chunks_cnt);
+      }
 
       [[nodiscard]]
       inline void *allocate(std::size_t const bytes_cnt, std::size_t const alignment = max_align) noexcept
@@ -79,14 +80,14 @@ namespace memmanagment {
         if (bytes_cnt == 0)
           return &pool.chunk[0];
 
-        auto const &&is_free = [](auto const &a){return !a.is_reserved;};
+        auto const &&is_free = [](auto const &a){return !a;};
         auto const &&get_chunk = [this](auto const info_it) {
-          std::size_t const index(std::distance(std::begin(pool.chunk_info), info_it));
+          std::size_t const index(std::distance(std::begin(pool.chunk_reserved), info_it));
           return &pool.chunk[index];
         };
 
 
-        for( auto it = std::begin(pool.chunk_info), end{std::end(pool.chunk_info)}; it != end;
+        for( auto it = std::begin(pool.chunk_reserved), end{std::end(pool.chunk_reserved)}; it != end;
             it = std::find_if(std::next(it), end, is_free)) {
           void *ptr{get_chunk(it)};
           std::size_t space{sizeof pool.chunk[0]};
@@ -94,7 +95,7 @@ namespace memmanagment {
           if (std::align(alignment, 0, ptr, space)) {
 
             if (bytes_cnt <= space) {
-              (*it).is_reserved = false;
+              *it = false;
               return ptr;
             }
 
@@ -105,7 +106,7 @@ namespace memmanagment {
               auto range_end = std::next(it, additional_chunks_needed + 1);
 
               if (std::all_of(std::next(it), range_end, is_free)) {
-                std::fill(it, range_end, chunk_info_t{true});
+                std::fill(it, range_end, true);
                 return ptr;
               }
             }
@@ -128,7 +129,7 @@ namespace memmanagment {
 
         std::lock_guard<std::mutex> guard{pool_mutex};
 
-        std::fill_n(std::next(std::begin(pool.chunk_info), first_chunk_index), chunks2deallocate, false);
+        std::fill_n(std::next(std::begin(pool.chunk_reserved), first_chunk_index), chunks2deallocate, false);
       }
   };
 
