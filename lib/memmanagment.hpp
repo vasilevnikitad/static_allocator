@@ -23,8 +23,8 @@ namespace memmanagment {
            typename Alloc = std::allocator<bool>>
   class mem_pool {
 
-    static_assert(CHUNK_SIZE <= POOL_SIZE,
-        "chunk size should be less or equal to pool size ");
+    static_assert(POOL_SIZE % CHUNK_SIZE == 0,
+        "Pool size must be a multiple of chunk size");
 
     private:
 
