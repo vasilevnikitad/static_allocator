@@ -64,14 +64,15 @@ namespace memmanagment {
 
           [[nodiscard]]
           T *allocate(std::size_t const n) {
-            static T storage[div_with_round(N, std::numeric_limits<std::uint8_t>::digits)];
+            alignas(T) static std::uint8_t storage[div_with_round(N, std::numeric_limits<std::uint8_t>::digits)];
 
             if (is_free && n > std::size(storage)) {
               std::cerr << __PRETTY_FUNCTION__ << ": Cannot allocate enough memmory" << std::endl;
               exit(EXIT_FAILURE);
             }
+
             is_free = false;
-            return storage;
+            return reinterpret_cast<T*>(storage);
           }
 
           constexpr
