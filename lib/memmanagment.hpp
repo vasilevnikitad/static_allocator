@@ -167,7 +167,7 @@ namespace memmanagment {
 
       inline void deallocate(T* const ptr, std::size_t const n) noexcept
       {
-        pool.deallocate(ptr, n * sizeof(T));
+        pool.deallocate(ptr, n * sizeof(T), alignof(T));
       }
 
       template<class U, typename U_MEM_POOL>
