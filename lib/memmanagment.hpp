@@ -149,8 +149,8 @@ namespace memmanagment {
       inline explicit mem_allocator(MEM_POOL &mem_pool) noexcept : pool{mem_pool}
       {}
 
-      template<class U, typename U_MEM_POOL>
-      inline mem_allocator(mem_allocator<U, U_MEM_POOL> const &allctr) noexcept : pool{allctr.pool}
+      template<class U>
+      inline mem_allocator(mem_allocator<U, MEM_POOL> const &allctr) noexcept : pool{allctr.pool}
       {}
 
       [[nodiscard]]
