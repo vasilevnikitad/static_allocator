@@ -19,8 +19,7 @@
 namespace memmanagment {
 
   template<std::size_t POOL_SIZE = 1000,
-           std::size_t CHUNK_SIZE = 10,
-           typename Alloc = std::allocator<bool>>
+           std::size_t CHUNK_SIZE = 10>
   class mem_pool {
 
     static_assert(POOL_SIZE % CHUNK_SIZE == 0,
@@ -46,10 +45,43 @@ namespace memmanagment {
       using chunk_type = std::aligned_storage_t<sizeof(chunk<CHUNK_SIZE>),
                                                 alignof(chunk<CHUNK_SIZE>)>;
       struct {
-        using vec_alloc = typename Alloc::template rebind<bool>::other;
+
+        template <typename T, std::size_t N>
+        struct vec_all {
+          bool is_free{true};
+
+          using value_type = T;
+
+          template <typename U>
+            struct rebind {
+              using other = vec_all<U, N>;
+            };
+
+          constexpr vec_all() noexcept = default;
+
+          constexpr vec_all(vec_all<bool, N> const &) noexcept {
+          }
+
+          [[nodiscard]]
+          T *allocate(std::size_t const n) {
+            static T storage[div_with_round(N, std::numeric_limits<std::uint8_t>::digits)];
+
+            if (is_free && n > std::size(storage)) {
+              std::cerr << __PRETTY_FUNCTION__ << ": Cannot allocate enough memmory" << std::endl;
+              exit(EXIT_FAILURE);
+            }
+            is_free = false;
+            return storage;
+          }
+
+          constexpr
+            void deallocate(T *const, std::size_t const) noexcept {
+              is_free = true;
+            }
+        };
 
         chunk_type chunk[chunks_cnt]{};
-        std::vector<bool, vec_alloc> chunk_reserved;
+        std::vector<bool, vec_all<bool, chunks_cnt>> chunk_reserved;
       } pool{};
 
       std::mutex pool_mutex;
